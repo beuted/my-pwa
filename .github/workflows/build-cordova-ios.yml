@@ -43,9 +43,13 @@ jobs:
 
       - name: Copy app files into Cordova project
         run: |
+          echo "--- Workspace contents ---"
+          ls -la
+          ls -la cordova-issue-reproduction/www/
+
           # Copy web assets
-          rm -rf cordova-build/www/*
-          cp -r cordova-issue-reproduction/www/* cordova-build/www/
+          rm -rf cordova-build/www
+          cp -R cordova-issue-reproduction/www cordova-build/www
 
           # Apply config variant or use default
           VARIANT="${{ github.event.inputs.config_variant || 'default' }}"

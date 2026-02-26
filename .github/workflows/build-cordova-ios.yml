@@ -63,41 +63,65 @@ jobs:
           echo "--- Active config.xml ---"
           cat cordova-build/config.xml
 
-      - name: Build iOS
+      - name: Build iOS with xcodebuild
         run: |
-          cd cordova-build
-          cordova build ios \
-            --release \
-            --device \
-            --buildFlag="CODE_SIGNING_ALLOWED=NO" \
-            --buildFlag="CODE_SIGNING_REQUIRED=NO" \
-            --buildFlag="CODE_SIGN_IDENTITY=" \
-            --buildFlag="CODE_SIGN_ENTITLEMENTS=" \
-            || true
+          cd cordova-build/platforms/ios
 
-      - name: Find and package IPA
-        run: |
-          echo "Searching for .app..."
-          APP_PATH=$(find cordova-build/platforms/ios/build -name "*.app" -type d 2>/dev/null | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "No .app found, trying xcodebuild directly..."
-            cd cordova-build/platforms/ios
+          echo "--- Listing iOS platform contents ---"
+          ls -la
+          echo "--- Workspaces ---"
+          find . -name "*.xcworkspace" -maxdepth 2
+          echo "--- Xcode projects ---"
+          find . -name "*.xcodeproj" -maxdepth 2
+
+          # Find the workspace or project
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 2 | head -1)
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 2 | head -1)
+
+          if [ -n "$WORKSPACE" ]; then
+            echo "Using workspace: $WORKSPACE"
+            # List available schemes
+            xcodebuild -workspace "$WORKSPACE" -list
+            SCHEME=$(xcodebuild -workspace "$WORKSPACE" -list 2>/dev/null | grep -A 100 "Schemes:" | tail -n +2 | head -1 | xargs)
+            echo "Using scheme: $SCHEME"
             xcodebuild archive \
-              -workspace "WhitelistBug.xcworkspace" \
-              -scheme "WhitelistBug" \
+              -workspace "$WORKSPACE" \
+              -scheme "$SCHEME" \
               -configuration Release \
-              -archivePath "$RUNNER_TEMP/WhitelistBug.xcarchive" \
+              -archivePath "$RUNNER_TEMP/App.xcarchive" \
               -destination "generic/platform=iOS" \
               CODE_SIGNING_ALLOWED=NO \
               CODE_SIGNING_REQUIRED=NO \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGN_ENTITLEMENTS="" \
               | tail -30
-            APP_PATH="$RUNNER_TEMP/WhitelistBug.xcarchive/Products/Applications/WhitelistBug.app"
+          elif [ -n "$PROJECT" ]; then
+            echo "Using project: $PROJECT"
+            xcodebuild -project "$PROJECT" -list
+            SCHEME=$(xcodebuild -project "$PROJECT" -list 2>/dev/null | grep -A 100 "Schemes:" | tail -n +2 | head -1 | xargs)
+            echo "Using scheme: $SCHEME"
+            xcodebuild archive \
+              -project "$PROJECT" \
+              -scheme "$SCHEME" \
+              -configuration Release \
+              -archivePath "$RUNNER_TEMP/App.xcarchive" \
+              -destination "generic/platform=iOS" \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGN_ENTITLEMENTS="" \
+              | tail -30
+          else
+            echo "ERROR: No .xcworkspace or .xcodeproj found"
+            exit 1
           fi
+
+      - name: Package IPA
+        run: |
+          APP_PATH=$(find "$RUNNER_TEMP/App.xcarchive/Products" -name "*.app" -type d | head -1)
           echo "APP_PATH=$APP_PATH"
           mkdir -p "$RUNNER_TEMP/Payload"
-          cp -r "$APP_PATH" "$RUNNER_TEMP/Payload/"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
           cd "$RUNNER_TEMP"
           zip -r WhitelistBug.ipa Payload
           echo "IPA created at $RUNNER_TEMP/WhitelistBug.ipa"

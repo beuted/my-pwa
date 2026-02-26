@@ -63,6 +63,11 @@ jobs:
           echo "--- Active config.xml ---"
           cat cordova-build/config.xml
 
+      - name: Prepare iOS platform with updated files
+        run: |
+          cd cordova-build
+          cordova prepare ios
+
       - name: Build iOS with xcodebuild
         run: |
           cd cordova-build/platforms/ios

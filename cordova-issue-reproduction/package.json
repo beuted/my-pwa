@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Reproduction of cordova-plugin-whitelist issue #49",
   "scripts": {
-    "prepare": "cordova prepare",
     "build:ios": "cordova build ios --release --device"
   },
   "dependencies": {

@@ -1,0 +1,101 @@
+name: Build Cordova iOS IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cordova-issue-reproduction/**"
+      - ".github/workflows/build-cordova-ios.yml"
+  workflow_dispatch:
+    inputs:
+      config_variant:
+        description: "Config variant to use"
+        required: true
+        default: "default"
+        type: choice
+        options:
+          - default
+          - option1-reject
+          - option2-allow-all
+          - option3-specific
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Cordova CLI
+        run: npm install -g cordova
+
+      - name: Install project dependencies
+        run: npm install
+        working-directory: cordova-issue-reproduction
+
+      - name: Add iOS platform
+        run: cordova platform add ios
+        working-directory: cordova-issue-reproduction
+
+      - name: Apply config variant
+        run: |
+          VARIANT="${{ github.event.inputs.config_variant || 'default' }}"
+          if [ "$VARIANT" != "default" ]; then
+            echo "Applying config variant: $VARIANT"
+            cp "configs/config-${VARIANT}.xml" config.xml
+          fi
+          echo "--- Active config.xml ---"
+          cat config.xml
+        working-directory: cordova-issue-reproduction
+
+      - name: Build iOS
+        run: |
+          cordova build ios \
+            --release \
+            --device \
+            --buildFlag="-UseModernBuildSystem=0" \
+            --buildFlag="CODE_SIGNING_ALLOWED=NO" \
+            --buildFlag="CODE_SIGNING_REQUIRED=NO" \
+            --buildFlag="CODE_SIGN_IDENTITY=" \
+            --buildFlag="CODE_SIGN_ENTITLEMENTS=" \
+            || true
+        working-directory: cordova-issue-reproduction
+
+      - name: Find and package IPA
+        run: |
+          echo "Searching for .app..."
+          APP_PATH=$(find cordova-issue-reproduction/platforms/ios/build -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found, trying xcodebuild directly..."
+            cd cordova-issue-reproduction/platforms/ios
+            xcodebuild archive \
+              -workspace "WhitelistBug.xcworkspace" \
+              -scheme "WhitelistBug" \
+              -configuration Release \
+              -archivePath "$RUNNER_TEMP/WhitelistBug.xcarchive" \
+              -destination "generic/platform=iOS" \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGN_ENTITLEMENTS="" \
+              | tail -30
+            APP_PATH="$RUNNER_TEMP/WhitelistBug.xcarchive/Products/Applications/WhitelistBug.app"
+          fi
+          echo "APP_PATH=$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -r "$APP_PATH" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -r WhitelistBug.ipa Payload
+          echo "IPA created at $RUNNER_TEMP/WhitelistBug.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhitelistBug-${{ github.event.inputs.config_variant || 'default' }}
+          path: ${{ runner.temp }}/WhitelistBug.ipa

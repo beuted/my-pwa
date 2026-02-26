@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap:; frame-src *;">
+    <title>Whitelist Bug Repro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Whitelist Issue #49</h1>
+        <p class="subtitle">cordova-plugin-whitelist iframe vs allow-navigation</p>
+
+        <div class="section">
+            <h2>1. Hidden Iframe Injection</h2>
+            <p>A hidden iframe will be injected below (simulating GTM / third-party tag behavior).
+               On cordova-ios 6.1.0+ without <code>allow-navigation="*"</code>, this will
+               <strong>kick you out to Safari</strong>.</p>
+            <button id="btn-inject">Inject Hidden Iframe</button>
+            <div id="iframe-status" class="status">Not injected yet</div>
+            <div id="iframe-container"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. External Links</h2>
+            <p>These links should open in the <strong>system browser</strong> (Safari).
+               With <code>allow-navigation="*"</code>, they incorrectly open
+               <strong>inside the app</strong>.</p>
+            <a href="https://www.fedex.com/en-us/tracking.html" class="link-btn">FedEx Tracking</a>
+            <a href="https://www.ups.com/track" class="link-btn">UPS Tracking</a>
+            <a href="https://www.google.com" class="link-btn">Google.com</a>
+        </div>
+
+        <div class="section">
+            <h2>3. Status Log</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

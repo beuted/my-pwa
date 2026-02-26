@@ -40,6 +40,7 @@ jobs:
           cordova create cordova-build com.example.whitelistbug WhitelistBug
           cd cordova-build
           cordova platform add ios
+          cordova plugin add cordova-plugin-whitelist
 
       - name: Copy app files into Cordova project
         run: |

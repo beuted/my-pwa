@@ -17,13 +17,15 @@
 
     <access origin="*" />
 
-    <allow-navigation href="file://*" />
+    <allow-navigation href="app://*" />
     <!-- Whitelist specific iframe domains we know about -->
     <allow-navigation href="*://bid.g.doubleclick.net/*" />
     <allow-navigation href="*://*.pinterest.com/*" />
 
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
+
+    <plugin name="cordova-plugin-whitelist" spec="1" />
 
     <platform name="ios">
         <preference name="WKWebViewOnly" value="true" />

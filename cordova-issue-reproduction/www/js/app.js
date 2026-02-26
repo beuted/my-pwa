@@ -10,61 +10,57 @@ function log(msg, cls) {
 
 log("App loaded");
 
-// Simulate what GTM / third-party tags do:
-// Inject a hidden iframe to an external domain.
-// On cordova-ios 6.1.0+ without allow-navigation for this domain,
-// this will kick the user out to Safari.
-function injectIframe() {
+// URLs that will definitely resolve and trigger navigation policy
+var TEST_URLS = [
+    "https://www.google.com",
+    "https://example.com",
+    "https://www.wikipedia.org"
+];
+
+function injectIframe(url) {
     var container = document.getElementById("iframe-container");
     var status = document.getElementById("iframe-status");
 
-    log("Injecting hidden iframe to bid.g.doubleclick.net...", "warn");
+    log("Injecting iframe: " + url, "warn");
 
     var iframe = document.createElement("iframe");
-    iframe.src = "https://bid.g.doubleclick.net/xbbe/pixel?d=KAE";
-    iframe.style.display = "none";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "none";
+    iframe.src = url;
+    // Make it visible so we can see what happens
+    iframe.style.width = "100%";
+    iframe.style.height = "150px";
+    iframe.style.border = "1px solid #e94560";
+    iframe.style.borderRadius = "6px";
+    iframe.style.marginTop = "8px";
+    iframe.style.background = "#fff";
 
     iframe.onload = function () {
-        log("iframe loaded successfully", "ok");
-        status.textContent = "iframe loaded (no redirect to Safari)";
-        status.className = "status success";
+        log("iframe loaded: " + url, "ok");
     };
 
     iframe.onerror = function () {
-        log("iframe failed to load (blocked or error)", "err");
-        status.textContent = "iframe blocked or errored";
-        status.className = "status error";
+        log("iframe error: " + url, "err");
     };
 
     container.appendChild(iframe);
-    status.textContent = "iframe injected — if you see Safari open, the bug is reproduced!";
+    status.textContent = "iframe injected — if Safari opens, the bug is reproduced!";
     status.className = "status";
-
-    // Also inject a second iframe simulating Pinterest's ct.html behavior
-    setTimeout(function () {
-        log("Injecting hidden iframe to pinterest.com/ct.html...", "warn");
-        var iframe2 = document.createElement("iframe");
-        iframe2.src = "https://www.pinterest.com/ct.html";
-        iframe2.style.display = "none";
-        iframe2.style.width = "0";
-        iframe2.style.height = "0";
-        iframe2.style.border = "none";
-
-        iframe2.onload = function () {
-            log("Pinterest iframe loaded successfully", "ok");
-        };
-        iframe2.onerror = function () {
-            log("Pinterest iframe blocked or errored", "err");
-        };
-
-        container.appendChild(iframe2);
-    }, 1000);
 }
 
-document.getElementById("btn-inject").addEventListener("click", injectIframe);
+function injectAllIframes() {
+    var container = document.getElementById("iframe-container");
+    container.innerHTML = "";
+    TEST_URLS.forEach(function (url, i) {
+        setTimeout(function () { injectIframe(url); }, i * 500);
+    });
+}
+
+document.getElementById("btn-inject").addEventListener("click", injectAllIframes);
+
+// Auto-inject on deviceready
+document.addEventListener("deviceready", function () {
+    log("deviceready fired — auto-injecting in 2s", "warn");
+    setTimeout(function () { injectIframe(TEST_URLS[0]); }, 2000);
+}, false);
 
 // Log when external links are tapped
 document.querySelectorAll(".link-btn").forEach(function (el) {

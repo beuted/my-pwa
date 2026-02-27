@@ -81,26 +81,13 @@ jobs:
           echo "--- Xcode projects ---"
           find . -name "*.xcodeproj" -maxdepth 2 || true
 
-          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 2 | head -1)
-          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 2 | head -1)
+          WORKSPACE="./App.xcworkspace"
+          SCHEME="App"
 
-          BUILD_CMD=""
-          if [ -n "$WORKSPACE" ]; then
-            echo "Using workspace: $WORKSPACE"
-            xcodebuild -workspace "$WORKSPACE" -list
-            SCHEME="WhitelistBugLatest"
-            echo "Using scheme: $SCHEME"
-            BUILD_CMD="-workspace $WORKSPACE"
-          elif [ -n "$PROJECT" ]; then
-            echo "Using project: $PROJECT"
-            xcodebuild -project "$PROJECT" -list
-            SCHEME="WhitelistBugLatest"
-            echo "Using scheme: $SCHEME"
-            BUILD_CMD="-project $PROJECT"
-          else
-            echo "ERROR: No .xcworkspace or .xcodeproj found"
-            exit 1
-          fi
+          echo "Using workspace: $WORKSPACE"
+          echo "Using scheme: $SCHEME"
+          xcodebuild -workspace "$WORKSPACE" -list
+          BUILD_CMD="-workspace $WORKSPACE"
 
           xcodebuild archive \
             $BUILD_CMD \

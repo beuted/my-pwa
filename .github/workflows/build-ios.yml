@@ -1,4 +1,4 @@
-name: Build iOS IPA
+name: Build Capacitor iOS IPA
 
 on:
   push:
@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: capacitor-issue-reproduction
 
     steps:
       - name: Checkout
@@ -24,7 +27,7 @@ jobs:
       - name: Copy web assets & sync Capacitor
         run: |
           mkdir -p www
-          cp index.html style.css app.js sw.js manifest.json www/
+          cp index.html style.css app.js manifest.json www/
           cp -r icons www/
           npx cap sync ios
 
@@ -48,10 +51,10 @@ jobs:
           cd $RUNNER_TEMP/App.xcarchive/Products/Applications
           mkdir -p Payload
           mv App.app Payload/
-          zip -r $RUNNER_TEMP/MyPWA.ipa Payload
+          zip -r $RUNNER_TEMP/CapacitorWhitelistBug.ipa Payload
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MyPWA-unsigned
-          path: ${{ runner.temp }}/MyPWA.ipa
+          name: CapacitorWhitelistBug-unsigned
+          path: ${{ runner.temp }}/CapacitorWhitelistBug.ipa

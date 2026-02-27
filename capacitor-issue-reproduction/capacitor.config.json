@@ -1,0 +1,10 @@
+{
+  "appId": "com.example.whitelistbug.capacitor",
+  "appName": "WhitelistBug Capacitor",
+  "webDir": "www",
+  "server": {
+    "allowNavigation": [
+      "https://example.com/*"
+    ]
+  }
+}

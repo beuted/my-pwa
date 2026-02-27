@@ -1,0 +1,63 @@
+name: Build WKWebView iOS IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "webview-issue-reproduction/**"
+      - ".github/workflows/build-webview-ios.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          cd webview-issue-reproduction
+          xcodegen generate
+          echo "--- Generated project ---"
+          ls -la
+
+      - name: Build unsigned IPA
+        run: |
+          cd webview-issue-reproduction
+          xcodebuild archive \
+            -project WebViewWhitelistBug.xcodeproj \
+            -scheme WebViewWhitelistBug \
+            -configuration Release \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            | tail -20
+
+      - name: Package IPA
+        run: |
+          APP_PATH=$(find "$RUNNER_TEMP/App.xcarchive/Products" -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: No .app found in archive"
+            find "$RUNNER_TEMP/App.xcarchive" -type d | head -30
+            exit 1
+          fi
+
+          echo "APP_PATH=$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -r WebViewWhitelistBug.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webview-whitelist-bug-unsigned
+          path: ${{ runner.temp }}/WebViewWhitelistBug.ipa

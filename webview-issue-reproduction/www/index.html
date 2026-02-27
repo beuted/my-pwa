@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data:; frame-src *;">
+    <title>Whitelist Bug Repro (WKWebView)</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Whitelist Issue (WKWebView)</h1>
+        <p class="subtitle">Native WKNavigationDelegate iframe test</p>
+
+        <div class="section">
+            <h2>1. Iframe Injection — Whitelisted vs Not</h2>
+            <p><strong>example.com</strong> is whitelisted in the native delegate —
+               its iframe should load <strong>inside the app</strong>.</p>
+            <p><strong>wikipedia.org</strong> is <em>not</em> whitelisted —
+               its iframe should <strong>open Safari</strong> (reproducing the bug).</p>
+            <button id="btn-inject-example">Inject example.com (whitelisted ✅)</button>
+            <button id="btn-inject-wikipedia">Inject wikipedia.org (NOT whitelisted ❌)</button>
+            <button id="btn-inject">Inject Both</button>
+            <div id="iframe-status" class="status">Not injected yet</div>
+            <div id="iframe-container"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. External Links</h2>
+            <p>These links should open in the <strong>system browser</strong> (Safari).</p>
+            <a href="https://www.fedex.com/en-us/tracking.html" class="link-btn">FedEx Tracking</a>
+            <a href="https://www.ups.com/track" class="link-btn">UPS Tracking</a>
+            <a href="https://www.google.com" class="link-btn">Google.com</a>
+        </div>
+
+        <div class="section">
+            <h2>3. Status Log</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

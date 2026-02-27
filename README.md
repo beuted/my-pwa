@@ -68,3 +68,32 @@ The `.ipa` files are unsigned. To install on a physical iPhone, use:
 
 - [AltStore](https://altstore.io/)
 - [Sideloadly](https://sideloadly.io/)
+
+## Setting Up a New GitHub Repository
+
+If you want to fork or push this to your own GitHub repository:
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/beuted/my-pwa.git
+cd my-pwa
+```
+
+### 2. Create a new GitHub repository
+
+Go to [github.com/new](https://github.com/new) and create a new repository. Do **not** initialize it with a README or `.gitignore`.
+
+### 3. Change the remote and push
+
+```bash
+git remote set-url origin git@github.com:<your-username>/<your-repo>.git
+git push -u origin main
+```
+
+### 4. Verify the builds
+
+1. Go to the **Actions** tab in your new repository
+2. The workflows should trigger automatically on push
+3. If not, trigger them manually via **Run workflow**
+4. Once complete, download the `.ipa` artifacts from each workflow run

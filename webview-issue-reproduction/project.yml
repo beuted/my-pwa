@@ -11,13 +11,13 @@ targets:
     sources:
       - Sources
     resources:
-      - Resources
-      - path: www
-        type: folder
+      - path: Resources
+        excludes:
+          - "*.plist"
     settings:
       base:
         INFOPLIST_FILE: Resources/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.example.whitelistbug.webview
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.1.0"
+        CURRENT_PROJECT_VERSION: 2
         CODE_SIGNING_ALLOWED: "NO"

@@ -26,18 +26,16 @@ class ViewController: UIViewController, WKNavigationDelegate {
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
-        // Load local index.html from www/
-        let bundleURL = Bundle.main.bundleURL
-        let wwwURL = bundleURL.appendingPathComponent("www")
-        let indexURL = wwwURL.appendingPathComponent("index.html")
-
-        if FileManager.default.fileExists(atPath: indexURL.path) {
+        // Load local index.html from www/ inside bundle
+        if let indexURL = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "www") {
+            let wwwURL = indexURL.deletingLastPathComponent()
             webView.loadFileURL(indexURL, allowingReadAccessTo: wwwURL)
         } else {
             // Debug: show what's in the bundle
+            let bundleURL = Bundle.main.bundleURL
             let contents = (try? FileManager.default.contentsOfDirectory(atPath: bundleURL.path)) ?? []
             webView.loadHTMLString(
-                "<h1>www/index.html not found</h1><p>Bundle contents: \(contents)</p><p>Looked at: \(indexURL.path)</p>",
+                "<h1>www/index.html not found</h1><p>Bundle contents: \(contents)</p>",
                 baseURL: nil
             )
         }

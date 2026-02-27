@@ -1,0 +1,147 @@
+name: Build Cordova Latest iOS IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cordova-latest-reproduction/**"
+      - ".github/workflows/build-cordova-latest-ios.yml"
+  workflow_dispatch:
+    inputs:
+      config_variant:
+        description: "Config variant to use"
+        required: true
+        default: "default"
+        type: choice
+        options:
+          - default
+          - option1-reject
+          - option2-allow-all
+          - option3-specific
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Cordova CLI
+        run: npm install -g cordova
+
+      - name: Create Cordova project
+        run: |
+          cordova create cordova-build com.example.whitelistbug.latest WhitelistBugLatest
+          cd cordova-build
+          cordova platform add ios
+          cordova plugin add cordova-plugin-whitelist
+
+      - name: Copy app files into Cordova project
+        run: |
+          echo "--- Workspace contents ---"
+          ls -la
+          ls -la cordova-latest-reproduction/www/
+
+          # Copy web assets
+          rm -rf cordova-build/www
+          cp -R cordova-latest-reproduction/www cordova-build/www
+
+          # Apply config variant or use default
+          VARIANT="${{ github.event.inputs.config_variant || 'default' }}"
+          if [ "$VARIANT" != "default" ]; then
+            echo "Applying config variant: $VARIANT"
+            cp "cordova-latest-reproduction/configs/config-${VARIANT}.xml" cordova-build/config.xml
+          else
+            cp cordova-latest-reproduction/config.xml cordova-build/config.xml
+          fi
+
+          echo "--- Active config.xml ---"
+          cat cordova-build/config.xml
+
+      - name: Prepare iOS platform with updated files
+        run: |
+          cd cordova-build
+          cordova prepare ios
+
+      - name: Build iOS with xcodebuild
+        run: |
+          set -euo pipefail
+          cd cordova-build/platforms/ios
+
+          echo "--- iOS platform contents ---"
+          ls -la
+          echo "--- Workspaces ---"
+          find . -name "*.xcworkspace" -maxdepth 2 || true
+          echo "--- Xcode projects ---"
+          find . -name "*.xcodeproj" -maxdepth 2 || true
+
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 2 | head -1)
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 2 | head -1)
+
+          BUILD_CMD=""
+          if [ -n "$WORKSPACE" ]; then
+            echo "Using workspace: $WORKSPACE"
+            xcodebuild -workspace "$WORKSPACE" -list
+            SCHEME="WhitelistBugLatest"
+            echo "Using scheme: $SCHEME"
+            BUILD_CMD="-workspace $WORKSPACE"
+          elif [ -n "$PROJECT" ]; then
+            echo "Using project: $PROJECT"
+            xcodebuild -project "$PROJECT" -list
+            SCHEME="WhitelistBugLatest"
+            echo "Using scheme: $SCHEME"
+            BUILD_CMD="-project $PROJECT"
+          else
+            echo "ERROR: No .xcworkspace or .xcodeproj found"
+            exit 1
+          fi
+
+          xcodebuild archive \
+            $BUILD_CMD \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | tail -50
+
+          # Verify archive was created
+          if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
+            echo "ERROR: Archive not created. Full log:"
+            cat "$RUNNER_TEMP/xcodebuild.log"
+            exit 1
+          fi
+
+      - name: Package IPA
+        run: |
+          echo "--- Archive contents ---"
+          find "$RUNNER_TEMP/App.xcarchive/Products" -type d || true
+
+          APP_PATH=$(find "$RUNNER_TEMP/App.xcarchive/Products" -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: No .app found in archive"
+            find "$RUNNER_TEMP/App.xcarchive" -type d | head -30
+            exit 1
+          fi
+
+          echo "APP_PATH=$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -r WhitelistBugLatest.ipa Payload
+          echo "IPA created at $RUNNER_TEMP/WhitelistBugLatest.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhitelistBugLatest-${{ github.event.inputs.config_variant || 'default' }}
+          path: ${{ runner.temp }}/WhitelistBugLatest.ipa

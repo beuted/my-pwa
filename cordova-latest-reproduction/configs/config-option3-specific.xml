@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  OPTION 3: Specific allow-navigation for known iframe domains.
+  Expected behavior:
+    - The hidden iframe to bid.g.doubleclick.net loads (no Safari redirect)
+    - External links (FedEx, UPS) correctly open in system browser
+    - BUT if a third party changes the iframe URL (e.g. Pinterest did),
+      the bug reappears — this approach is brittle
+-->
+<widget id="com.example.whitelistbug" version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>WhitelistBug</name>
+    <description>Option 3: Specific iframe domains (brittle workaround)</description>
+
+    <content src="index.html" />
+
+    <access origin="*" />
+
+    <allow-navigation href="app://*" />
+    <!-- Whitelist specific iframe domains we know about -->
+    <allow-navigation href="*://bid.g.doubleclick.net/*" />
+    <allow-navigation href="*://*.pinterest.com/*" />
+
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+
+    <plugin name="cordova-plugin-whitelist" spec="1" />
+
+    <platform name="ios">
+        <preference name="WKWebViewOnly" value="true" />
+        <preference name="scheme" value="app" />
+        <preference name="hostname" value="localhost" />
+    </platform>
+
+    <preference name="BackgroundColor" value="0xff222222" />
+</widget>

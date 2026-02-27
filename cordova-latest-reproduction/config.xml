@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.example.whitelistbug.latest" version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>WhitelistBugLatest</name>
+    <description>Reproduction of cordova-plugin-whitelist issue #49 (latest cordova-ios)</description>
+
+    <content src="index.html" />
+
+    <access origin="*" />
+
+    <allow-navigation href="app://*" />
+
+    <!-- Whitelist example.com only — wikipedia.org is intentionally NOT whitelisted -->
+    <allow-navigation href="https://example.com/*" />
+
+    <!-- Allow opening external links in system browser -->
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+
+    <plugin name="cordova-plugin-whitelist" spec="1" />
+
+    <platform name="ios">
+        <preference name="WKWebViewOnly" value="true" />
+        <preference name="scheme" value="app" />
+        <preference name="hostname" value="localhost" />
+    </platform>
+
+    <preference name="BackgroundColor" value="0xff222222" />
+</widget>

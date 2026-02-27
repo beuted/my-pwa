@@ -1,0 +1,19 @@
+{
+  "name": "cordova-issue-reproduction",
+  "version": "1.0.0",
+  "description": "Reproduction of cordova-plugin-whitelist issue #49",
+  "scripts": {
+    "build:ios": "cordova build ios --release --device"
+  },
+  "dependencies": {
+    "cordova-ios": "^6.1.0"
+  },
+  "devDependencies": {
+    "cordova": "^12.0.0"
+  },
+  "cordova": {
+    "platforms": [
+      "ios"
+    ]
+  }
+}

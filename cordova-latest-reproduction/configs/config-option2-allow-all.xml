@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  OPTION 2: Wildcard allow-navigation.
+  Expected behavior:
+    - The hidden iframe loads successfully (no Safari redirect)
+    - BUT external links (FedEx, UPS) now open INSIDE the app
+      instead of in the system browser — this breaks link behavior
+    - Security risk: any URL can navigate the webview
+-->
+<widget id="com.example.whitelistbug" version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>WhitelistBug</name>
+    <description>Option 2: allow-navigation="*" (fixes iframe, breaks links)</description>
+
+    <content src="index.html" />
+
+    <access origin="*" />
+
+    <!-- Allow ALL navigation — fixes iframe but breaks external links -->
+    <allow-navigation href="*" />
+
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+
+    <plugin name="cordova-plugin-whitelist" spec="1" />
+
+    <platform name="ios">
+        <preference name="WKWebViewOnly" value="true" />
+        <preference name="scheme" value="app" />
+        <preference name="hostname" value="localhost" />
+    </platform>
+
+    <preference name="BackgroundColor" value="0xff222222" />
+</widget>

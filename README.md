@@ -34,7 +34,14 @@ In **cordova-ios 7.x+** (released [July 2023](https://cordova.apache.org/announc
 
 In **Capacitor**, the [`server.allowNavigation`](https://capacitorjs.com/docs/config#server) config option similarly only controls **top-level WebView navigation**. Iframes are not intercepted by the navigation delegate, so they always load inside the app regardless of the allowNavigation list.
 
-The **WKWebView wrapper** app proves this isn't a Cordova-specific issue. Any native app that implements `WKNavigationDelegate.decidePolicyFor` and applies whitelist logic to **sub-frame navigations** (checking `targetFrame?.isMainFrame == false`) will exhibit the same behavior — blocking non-whitelisted iframes and opening them in Safari via `UIApplication.shared.open(url)`.
+The **WKWebView wrapper** app proves this isn't a Cordova-specific issue. The whitelist logic is implemented in [`webview-issue-reproduction/Sources/ViewController.swift`](webview-issue-reproduction/Sources/ViewController.swift) (lines 46–85) via `WKNavigationDelegate.decidePolicyFor`. The key behavior:
+
+1. **Line 9**: Only `example.com` is in the `allowedNavigationDomains` whitelist
+2. **Line 66**: Checks if the navigation is a sub-frame (iframe) via `targetFrame?.isMainFrame == false`
+3. **Lines 68–70**: If the iframe domain is whitelisted → `decisionHandler(.allow)` → loads inside the app
+4. **Lines 72–74**: If **not** whitelisted → `decisionHandler(.cancel)` + `UIApplication.shared.open(url)` → **opens Safari**
+
+Any native app that implements this pattern — intercepting sub-frame navigations and opening non-whitelisted URLs externally — will exhibit the same bug.
 
 ### Summary
 
@@ -64,8 +71,9 @@ my-pwa/
 ├── webview-issue-reproduction/       # Native WKWebView wrapper
 │   ├── project.yml                   # XcodeGen spec
 │   ├── Sources/                      # Swift source (AppDelegate, ViewController)
-│   ├── Resources/                    # Info.plist
-│   └── www/                          # Web assets
+│   └── Resources/
+│       ├── Info.plist
+│       └── www/                      # Web assets
 └── .github/workflows/
     ├── build-cordova-ios.yml         # Builds cordova-ios@6.1.0
     ├── build-cordova-latest-ios.yml  # Builds latest cordova-ios

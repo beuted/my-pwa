@@ -56,5 +56,5 @@ jobs:
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CapacitorWhitelistBug-unsigned
+          name: capacitor-whitelist-bug-unsigned
           path: ${{ runner.temp }}/CapacitorWhitelistBug.ipa

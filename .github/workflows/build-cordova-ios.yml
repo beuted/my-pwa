@@ -143,5 +143,5 @@ jobs:
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WhitelistBug-${{ github.event.inputs.config_variant || 'default' }}
+          name: cordova-6.1.0-whitelist-bug-${{ github.event.inputs.config_variant || 'default' }}
           path: ${{ runner.temp }}/WhitelistBug.ipa

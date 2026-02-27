@@ -4,32 +4,41 @@ This repo builds **3 different iOS apps** to test how iframe navigation whitelis
 
 ## The 3 Apps
 
-| App | Folder | Framework | Whitelist mechanism | Build workflow |
-|-----|--------|-----------|-------------------|----------------|
-| **Cordova 6.1.0** | `cordova-issue-reproduction/` | cordova-ios@6.1.0 | `<allow-navigation>` via `cordova-plugin-whitelist` | `build-cordova-ios.yml` |
-| **Cordova Latest** | `cordova-latest-reproduction/` | cordova-ios (latest) | `<allow-navigation>` via `cordova-plugin-whitelist` | `build-cordova-latest-ios.yml` |
-| **Capacitor** | `capacitor-issue-reproduction/` | @capacitor/ios@8.x | `server.allowNavigation` in `capacitor.config.json` | `build-ios.yml` |
+| App                | Folder                          | Framework            | Whitelist mechanism                                 | Build workflow                 |
+| ------------------ | ------------------------------- | -------------------- | --------------------------------------------------- | ------------------------------ |
+| **Cordova 6.1.0**  | `cordova-issue-reproduction/`   | cordova-ios@6.1.0    | `<allow-navigation>` via `cordova-plugin-whitelist` | `build-cordova-ios.yml`        |
+| **Cordova Latest** | `cordova-latest-reproduction/`  | cordova-ios (latest) | `<allow-navigation>` via `cordova-plugin-whitelist` | `build-cordova-latest-ios.yml` |
+| **Capacitor**      | `capacitor-issue-reproduction/` | @capacitor/ios@8.x   | `server.allowNavigation` in `capacitor.config.json` | `build-ios.yml`                |
 
 Each app has the same test UI:
+
 - A button to inject an **example.com** iframe (whitelisted ✅)
 - A button to inject a **wikipedia.org** iframe (NOT whitelisted ❌)
 - A button to inject both
 
 ## Results
 
-| App | iframe blocked? | Opens Safari? |
-|-----|----------------|---------------|
-| **Cordova 6.1.0** | ✅ Yes — non-whitelisted iframes trigger Safari redirect | ✅ Bug reproduced |
-| **Cordova Latest** | ❌ No — `cordova-plugin-whitelist` is deprecated/ignored in cordova-ios 7.x+ | ❌ No bug |
-| **Capacitor** | ❌ No — `allowNavigation` only controls top-level navigation, not iframes | ❌ No bug |
+| App                | iframe blocked?                                                              | Opens Safari?     |
+| ------------------ | ---------------------------------------------------------------------------- | ----------------- |
+| **Cordova 6.1.0**  | ✅ Yes — non-whitelisted iframes trigger Safari redirect                     | ✅ Bug reproduced |
+| **Cordova Latest** | ❌ No — `cordova-plugin-whitelist` is deprecated/ignored in cordova-ios 7.x+ | ❌ No bug         |
+| **Capacitor**      | ❌ No — `allowNavigation` only controls top-level navigation, not iframes    | ❌ No bug         |
 
 ## Why the bug only occurs on Cordova 6.x
 
-In **cordova-ios 6.x**, `cordova-plugin-whitelist` installs a `WKNavigationDelegate` that intercepts **all** navigation requests — including sub-frame (iframe) loads. If an iframe URL doesn't match `<allow-navigation>`, it calls `UIApplication.openURL` which opens Safari.
+In **cordova-ios 6.x**, the [`cordova-plugin-whitelist`](https://github.com/apache/cordova-plugin-whitelist) plugin installs a native `WKNavigationDelegate` (`CDVIntentAndNavigationFilter`) that intercepts **all** navigation requests — including **sub-frame (iframe)** loads. When an iframe tries to load a URL that doesn't match any `<allow-navigation>` entry in `config.xml`, the delegate calls `UIApplication.openURL`, which hands the URL off to Safari. This is the root cause of the bug: a simple third-party iframe (e.g. from GTM or an ad tag) can kick the user out of the app entirely.
 
-In **cordova-ios 7.x+**, the whitelist plugin was deprecated. The built-in navigation policy only enforces rules on top-level navigations, not iframes.
+In **cordova-ios 7.x+** (released [July 2023](https://cordova.apache.org/announcements/2023/07/10/cordova-ios-7.0.0.html)), `cordova-plugin-whitelist` was [deprecated and archived](https://github.com/apache/cordova-plugin-whitelist#deprecation-notice). The allow-list functionality was reworked and integrated into the core of Cordova itself. The key behavioral change is that the built-in navigation policy only intercepts **top-level (main frame)** navigations — iframes are no longer subject to the whitelist check, so they load freely without triggering a Safari redirect.
 
-In **Capacitor**, `server.allowNavigation` similarly only controls top-level WebView navigation. Iframes load freely.
+In **Capacitor**, the [`server.allowNavigation`](https://capacitorjs.com/docs/config#server) config option similarly only controls **top-level WebView navigation**. Iframes are not intercepted by the navigation delegate, so they always load inside the app regardless of the allowNavigation list.
+
+### Summary
+
+| Framework                                      | Intercepts iframe navigations?                | Bug occurs? |
+| ---------------------------------------------- | --------------------------------------------- | ----------- |
+| cordova-ios 6.x + `cordova-plugin-whitelist`   | ✅ Yes — all navigations including sub-frames | ✅ Yes      |
+| cordova-ios 7.x+ (whitelist plugin deprecated) | ❌ No — top-level only                        | ❌ No       |
+| Capacitor 8.x                                  | ❌ No — top-level only                        | ❌ No       |
 
 ## Project Structure
 
@@ -55,12 +64,22 @@ my-pwa/
 
 ## Downloading the IPAs
 
+Github actions allow to build IPA by running on macos instances ! That's why it's handy to have this repository on github.
+
 1. Go to the **Actions** tab in GitHub
 2. Click the relevant workflow run
 3. Download the artifact:
    - `cordova-6.1.0-whitelist-bug-default`
    - `cordova-latest-whitelist-bug-default`
    - `capacitor-whitelist-bug-unsigned`
+
+### Installing on Saucelab
+
+- Connect to [Saucelab](https://app.eu-central-1.saucelabs.com/) on the EU Central 1 DC
+- Add the .ipa in the "App Management" tab
+- Go to "Get Started Guide" > "Manual testing" > "Mobile app"
+- Choose the uploaded .ipa and an IOS device
+- Click "Start test"
 
 ### Installing on a Real Device
 

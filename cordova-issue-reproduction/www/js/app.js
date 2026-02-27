@@ -10,12 +10,8 @@ function log(msg, cls) {
 
 log("App loaded");
 
-// URLs that will definitely resolve and trigger navigation policy
-var TEST_URLS = [
-  //"https://www.google.com",
-  "https://example.com",
-  "https://www.wikipedia.org",
-];
+var URL_EXAMPLE = "https://example.com";
+var URL_WIKIPEDIA = "https://www.wikipedia.org";
 
 function injectIframe(url) {
   var container = document.getElementById("iframe-container");
@@ -25,7 +21,6 @@ function injectIframe(url) {
 
   var iframe = document.createElement("iframe");
   iframe.src = url;
-  // Make it visible so we can see what happens
   iframe.style.width = "100%";
   iframe.style.height = "150px";
   iframe.style.border = "1px solid #e94560";
@@ -46,17 +41,26 @@ function injectIframe(url) {
   status.className = "status";
 }
 
-function injectAllIframes() {
-  var container = document.getElementById("iframe-container");
-  container.innerHTML = "";
-  TEST_URLS.forEach(function (url, i) {
-    setTimeout(function () {
-      injectIframe(url);
-    }, i * 500);
-  });
-}
+// Inject example.com (whitelisted — should stay in app)
+document.getElementById("btn-inject-example").addEventListener("click", function () {
+  document.getElementById("iframe-container").innerHTML = "";
+  injectIframe(URL_EXAMPLE);
+});
 
-document.getElementById("btn-inject").addEventListener("click", injectAllIframes);
+// Inject wikipedia.org (NOT whitelisted — should open Safari)
+document.getElementById("btn-inject-wikipedia").addEventListener("click", function () {
+  document.getElementById("iframe-container").innerHTML = "";
+  injectIframe(URL_WIKIPEDIA);
+});
+
+// Inject both
+document.getElementById("btn-inject").addEventListener("click", function () {
+  document.getElementById("iframe-container").innerHTML = "";
+  injectIframe(URL_EXAMPLE);
+  setTimeout(function () {
+    injectIframe(URL_WIKIPEDIA);
+  }, 500);
+});
 
 // Auto-inject on deviceready
 document.addEventListener(
@@ -64,7 +68,7 @@ document.addEventListener(
   function () {
     log("deviceready fired — auto-injecting in 2s", "warn");
     setTimeout(function () {
-      injectIframe(TEST_URLS[0]);
+      injectIframe(URL_EXAMPLE);
     }, 2000);
   },
   false,

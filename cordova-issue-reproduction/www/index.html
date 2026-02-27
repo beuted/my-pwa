@@ -14,11 +14,14 @@
         <p class="subtitle">cordova-plugin-whitelist iframe vs allow-navigation</p>
 
         <div class="section">
-            <h2>1. Hidden Iframe Injection</h2>
-            <p>A hidden iframe will be injected below (simulating GTM / third-party tag behavior).
-               On cordova-ios 6.1.0+ without <code>allow-navigation="*"</code>, this will
-               <strong>kick you out to Safari</strong>.</p>
-            <button id="btn-inject">Inject Hidden Iframe</button>
+            <h2>1. Iframe Injection — Whitelisted vs Not</h2>
+            <p><strong>example.com</strong> is whitelisted via <code>allow-navigation</code> —
+               its iframe should load <strong>inside the app</strong>.</p>
+            <p><strong>wikipedia.org</strong> is <em>not</em> whitelisted —
+               its iframe should <strong>open Safari</strong> (reproducing the bug).</p>
+            <button id="btn-inject-example">Inject example.com (whitelisted ✅)</button>
+            <button id="btn-inject-wikipedia">Inject wikipedia.org (NOT whitelisted ❌)</button>
+            <button id="btn-inject">Inject Both</button>
             <div id="iframe-status" class="status">Not injected yet</div>
             <div id="iframe-container"></div>
         </div>

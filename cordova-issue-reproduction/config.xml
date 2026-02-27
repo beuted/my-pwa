@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.example.whitelistbug" version="1.6.0"
+<widget id="com.example.whitelistbug" version="1.7.0"
         xmlns="http://www.w3.org/ns/widgets"
         xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>WhitelistBug</name>
@@ -12,8 +12,8 @@
     <!-- Only allow navigation to the app's own scheme (cordova-ios 6.x uses app://localhost) -->
     <allow-navigation href="app://*" />
 
-    <!-- Allow all navigation to compare behavior -->
-    <allow-navigation href="*" />
+    <!-- Whitelist example.com only — wikipedia.org is intentionally NOT whitelisted -->
+    <allow-navigation href="https://example.com/*" />
 
     <!-- Allow opening external links in system browser -->
     <allow-intent href="http://*/*" />

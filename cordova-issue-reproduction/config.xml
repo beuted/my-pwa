@@ -12,6 +12,9 @@
     <!-- Only allow navigation to the app's own scheme (cordova-ios 6.x uses app://localhost) -->
     <allow-navigation href="app://*" />
 
+    <!-- Allow all navigation to compare behavior -->
+    <allow-navigation href="*" />
+
     <!-- Allow opening external links in system browser -->
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />

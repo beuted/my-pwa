@@ -1,142 +1,70 @@
-# My PWA
+# Whitelist Bug Reproduction
 
-A minimal Progressive Web App that displays "Hello World", hosted on GitHub Pages with automated iOS `.ipa` builds via GitHub Actions.
+This repo builds **3 different iOS apps** to test how iframe navigation whitelisting behaves across frameworks and versions. The goal is to reproduce [cordova-plugin-whitelist issue #49](https://github.com/apache/cordova-plugin-whitelist/issues/49), where third-party iframes cause the app to redirect to Safari.
+
+## The 3 Apps
+
+| App | Folder | Framework | Whitelist mechanism | Build workflow |
+|-----|--------|-----------|-------------------|----------------|
+| **Cordova 6.1.0** | `cordova-issue-reproduction/` | cordova-ios@6.1.0 | `<allow-navigation>` via `cordova-plugin-whitelist` | `build-cordova-ios.yml` |
+| **Cordova Latest** | `cordova-latest-reproduction/` | cordova-ios (latest) | `<allow-navigation>` via `cordova-plugin-whitelist` | `build-cordova-latest-ios.yml` |
+| **Capacitor** | `capacitor-issue-reproduction/` | @capacitor/ios@8.x | `server.allowNavigation` in `capacitor.config.json` | `build-ios.yml` |
+
+Each app has the same test UI:
+- A button to inject an **example.com** iframe (whitelisted ✅)
+- A button to inject a **wikipedia.org** iframe (NOT whitelisted ❌)
+- A button to inject both
+
+## Results
+
+| App | iframe blocked? | Opens Safari? |
+|-----|----------------|---------------|
+| **Cordova 6.1.0** | ✅ Yes — non-whitelisted iframes trigger Safari redirect | ✅ Bug reproduced |
+| **Cordova Latest** | ❌ No — `cordova-plugin-whitelist` is deprecated/ignored in cordova-ios 7.x+ | ❌ No bug |
+| **Capacitor** | ❌ No — `allowNavigation` only controls top-level navigation, not iframes | ❌ No bug |
+
+## Why the bug only occurs on Cordova 6.x
+
+In **cordova-ios 6.x**, `cordova-plugin-whitelist` installs a `WKNavigationDelegate` that intercepts **all** navigation requests — including sub-frame (iframe) loads. If an iframe URL doesn't match `<allow-navigation>`, it calls `UIApplication.openURL` which opens Safari.
+
+In **cordova-ios 7.x+**, the whitelist plugin was deprecated. The built-in navigation policy only enforces rules on top-level navigations, not iframes.
+
+In **Capacitor**, `server.allowNavigation` similarly only controls top-level WebView navigation. Iframes load freely.
 
 ## Project Structure
 
 ```
 my-pwa/
-├── index.html                 # App shell + GTM snippet
-├── style.css                  # Dark centered layout
-├── app.js                     # Criteo dataLayer push + SW registration
-├── sw.js                      # Service Worker for offline caching
-├── manifest.json              # PWA manifest (name, icons, theme)
-├── icons/
-│   ├── icon-192.png           # PWA icon 192×192
-│   └── icon-512.png           # PWA icon 512×512
-├── capacitor.config.json      # Capacitor iOS config
-├── package.json               # Node dependencies
-└── .github/
-    └── workflows/
-        └── build-ios.yml      # GitHub Actions workflow to build .ipa
+├── cordova-issue-reproduction/       # Cordova 6.1.0 app
+│   ├── config.xml
+│   ├── configs/                      # Config variants for testing
+│   └── www/                          # Web assets
+├── cordova-latest-reproduction/      # Cordova latest app
+│   ├── config.xml
+│   ├── configs/
+│   └── www/
+├── capacitor-issue-reproduction/     # Capacitor 8.x app
+│   ├── capacitor.config.json
+│   ├── ios/                          # Xcode project
+│   └── *.html, *.js, *.css          # Web assets
+└── .github/workflows/
+    ├── build-cordova-ios.yml         # Builds cordova-ios@6.1.0
+    ├── build-cordova-latest-ios.yml  # Builds latest cordova-ios
+    └── build-ios.yml                 # Builds Capacitor app
 ```
 
-## How It Works
+## Downloading the IPAs
 
-```
-                GitHub Pages                    GitHub Actions (macOS)
-               ┌───────────┐                   ┌──────────────────────┐
-  Browser ───► │ index.html │    git push ────► │ npm ci               │
-               │ style.css  │                   │ cap sync ios         │
-               │ app.js     │                   │ xcodebuild archive   │
-               │ sw.js      │                   │ ──► MyPWA.ipa        │
-               └───────────┘                   └──────────────────────┘
-                  PWA (web)                        Native iOS app
-```
-
-1. **GitHub Pages** serves the PWA as a regular website — installable from the browser on any device.
-2. **GitHub Actions** wraps the same web assets in a native iOS shell using [Capacitor](https://capacitorjs.com/) and builds an unsigned `.ipa` on every push to `main`.
-
-## GitHub Pages (Web)
-
-The PWA is served directly from the repository root. Once Pages is enabled, the app is available at:
-
-```
-https://<username>.github.io/<repo-name>/
-```
-
-Users can "Add to Home Screen" from their mobile browser to get a native-like experience.
-
-## iOS Build (IPA)
-
-On every push to `main` (or via manual trigger), the GitHub Actions workflow:
-
-1. Installs Node dependencies
-2. Copies web assets to `www/` and runs `npx cap sync ios`
-3. Builds an unsigned `.ipa` using `xcodebuild` on a macOS runner
-4. Uploads the `.ipa` as a downloadable artifact
-
-### Downloading the IPA
-
-1. Go to the **Actions** tab in your GitHub repository
-2. Click the latest **Build iOS IPA** workflow run
-3. Scroll to **Artifacts** and download `MyPWA-unsigned`
+1. Go to the **Actions** tab in GitHub
+2. Click the relevant workflow run
+3. Download the artifact:
+   - `cordova-6.1.0-whitelist-bug-default`
+   - `cordova-latest-whitelist-bug-default`
+   - `capacitor-whitelist-bug-unsigned`
 
 ### Installing on a Real Device
 
-The `.ipa` is unsigned. To install it on a physical iPhone, use one of these tools with a free Apple ID:
+The `.ipa` files are unsigned. To install on a physical iPhone, use:
 
 - [AltStore](https://altstore.io/)
 - [Sideloadly](https://sideloadly.io/)
-
-For distribution via TestFlight or the App Store, you need a paid Apple Developer account ($99/year) and proper code signing configured as GitHub secrets.
-
-## GTM & Criteo
-
-The app includes Google Tag Manager and a Criteo `dataLayer` event. Replace the placeholders before going live:
-
-| Placeholder | File | Description |
-|-------------|------|-------------|
-| `GTM-XXXXXXX` | `index.html` | Your GTM Container ID |
-| `12345` | `app.js` | Your Criteo Partner ID |
-
-In GTM's web console, create a tag (Custom HTML or Criteo OneTag template) triggered by the `crto_homepage` custom event.
-
-## How to Setup GitHub Repository
-
-Follow these steps to publish this project to a new (or different) GitHub repository.
-
-### 1. Create the Repository
-
-Go to [github.com/new](https://github.com/new) and create a new repository. Do **not** initialize it with a README or `.gitignore`.
-
-### 2. Push the Code
-
-```bash
-cd my-pwa
-
-# Initialize git (skip if already done)
-git init
-git branch -m main
-
-# Stage and commit
-git add -A
-git commit -m "Initial commit"
-
-# Point to your new repository
-git remote add origin git@github.com:<username>/<repo-name>.git
-
-# If migrating from another remote, replace the URL instead
-# git remote set-url origin git@github.com:<username>/<repo-name>.git
-
-# Push
-git push -u origin main
-```
-
-### 3. Enable GitHub Pages
-
-1. Go to **Settings → Pages**
-2. Under **Source**, select **Branch: `main`** and folder **`/ (root)`**
-3. Click **Save**
-4. Your site will be live at `https://<username>.github.io/<repo-name>/` within a few minutes
-
-### 4. Verify the iOS Build
-
-1. Go to the **Actions** tab
-2. The **Build iOS IPA** workflow should trigger automatically on push
-3. If it didn't, click **Build iOS IPA → Run workflow → Run workflow**
-4. Once complete, download the `.ipa` from the **Artifacts** section
-
-### 5. (Optional) Update Capacitor App ID
-
-If you want a unique iOS bundle identifier, edit `capacitor.config.json`:
-
-```json
-{
-  "appId": "com.yourdomain.yourapp",
-  "appName": "Your App Name",
-  "webDir": "www"
-}
-```
-
-Then commit and push — the next build will use the new identifier.

@@ -88,13 +88,13 @@ jobs:
           if [ -n "$WORKSPACE" ]; then
             echo "Using workspace: $WORKSPACE"
             xcodebuild -workspace "$WORKSPACE" -list
-            SCHEME=$(xcodebuild -workspace "$WORKSPACE" -list 2>/dev/null | grep -A 100 "Schemes:" | tail -n +2 | head -1 | xargs)
+            SCHEME="WhitelistBug"
             echo "Using scheme: $SCHEME"
             BUILD_CMD="-workspace $WORKSPACE"
           elif [ -n "$PROJECT" ]; then
             echo "Using project: $PROJECT"
             xcodebuild -project "$PROJECT" -list
-            SCHEME=$(xcodebuild -project "$PROJECT" -list 2>/dev/null | grep -A 100 "Schemes:" | tail -n +2 | head -1 | xargs)
+            SCHEME="WhitelistBug"
             echo "Using scheme: $SCHEME"
             BUILD_CMD="-project $PROJECT"
           else

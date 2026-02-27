@@ -10,13 +10,15 @@ targets:
     platform: iOS
     sources:
       - Sources
-    resources:
-      - path: Resources/www
-        type: folder
+    postCompileScripts:
+      - name: Copy www to bundle
+        script: |
+          cp -R "${SRCROOT}/Resources/www" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/www"
+        basedOnDependencyAnalysis: false
     settings:
       base:
         INFOPLIST_FILE: Resources/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.example.whitelistbug.webview
-        MARKETING_VERSION: "1.2.0"
-        CURRENT_PROJECT_VERSION: 3
+        MARKETING_VERSION: "1.3.0"
+        CURRENT_PROJECT_VERSION: 4
         CODE_SIGNING_ALLOWED: "NO"

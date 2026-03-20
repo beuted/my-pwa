@@ -74,13 +74,8 @@ class ViewController: UIViewController, WKNavigationDelegate {
                 UIApplication.shared.open(url)
             }
         } else {
-            // Top-level navigation
-            if isWhitelisted || url.scheme == "about" {
-                decisionHandler(.allow)
-            } else {
-                decisionHandler(.cancel)
-                UIApplication.shared.open(url)
-            }
+            // Top-level navigation: allow in-webview (no redirect for non-whitelisted URLs)
+            decisionHandler(.allow)
         }
     }
 }

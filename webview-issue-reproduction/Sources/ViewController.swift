@@ -61,21 +61,8 @@ class ViewController: UIViewController, WKNavigationDelegate {
         let host = url.host ?? ""
 
         // Check if the domain is whitelisted
-        let isWhitelisted = allowedNavigationDomains.contains(where: { host.hasSuffix($0) })
+        //let isWhitelisted = allowedNavigationDomains.contains(where: { host.hasSuffix($0) })
 
-        if navigationAction.targetFrame?.isMainFrame == false {
-            // Sub-frame (iframe) navigation
-            if isWhitelisted {
-                // Whitelisted: allow iframe to load inside the app
-                decisionHandler(.allow)
-            } else {
-                // NOT whitelisted: block and open in Safari (reproducing Cordova 6.x behavior)
-                decisionHandler(.cancel)
-                UIApplication.shared.open(url)
-            }
-        } else {
-            // Top-level navigation: allow in-webview (no redirect for non-whitelisted URLs)
-            decisionHandler(.allow)
-        }
+        decisionHandler(.allow)
     }
 }

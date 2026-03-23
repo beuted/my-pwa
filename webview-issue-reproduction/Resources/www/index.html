@@ -28,11 +28,8 @@
       <div class="section">
         <h2>DIS iframe + <code>empty.html</code> redirect</h2>
         <p>
-          On load, an <strong>unsandboxed</strong> zero-size iframe loads
-          <a href="https://beuted.github.io/my-pwa/criteo-dis-mock.html"><code>criteo-dis-mock.html</code></a>
-          from GitHub Pages (same HTML as the inlined CTS mock: nested <code>about:blank</code> subframe, hidden
-          <code>#cto_pc</code>). After <strong>2 seconds</strong> the <strong>iframe document</strong> runs
-          <code>location.replace('https://static.criteo.net/empty.html')</code>; the parent file page stays here.
+          On load, an <strong>unsandboxed</strong> zero-size iframe (no <code>src</code>) is filled via <code>document.write</code> with CTS-style HTML (nested <code>about:blank</code> subframe stub). After <strong>2 seconds</strong> the <strong>main document</strong> runs
+          <code>location.replace(protocol + '//static.criteo.net/empty.html')</code>, leaving this page.
         </p>
       </div>
 
@@ -75,14 +72,31 @@
           p.setAttribute("aria-hidden", "true");
           p.setAttribute("tabindex", "-1");
           p.title = "Criteo DIS iframe";
-          p.src = disingCall.ctsUrl;
 
           document.body.appendChild(p);
+          if (p.contentDocument != null) {
+            p.contentDocument.open();
+            p.contentDocument.write(disingCall.ctsHtml);
+            p.contentDocument.close();
+            return;
+          }
         }
 
-        var disMockHostedUrl = "https://beuted.github.io/my-pwa/criteo-dis-mock.html";
+        var sampleCtsHtml =
+          '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Criteo DIS Mock</title></head><body>' +
+          '<iframe id="cto_sub_ifr_px" src="about:blank" style="width:1px;height:1px;display:none;"></iframe>' +
+          '<div id="cto_pc" style="display:none"></div>' +
+          "<scr" +
+          'ipt>window.setTimeout(function() {var redirectLocation = \"https://static.criteo.net/empty.html\";location.replace(redirectLocation);}, 2000);</scr' +
+          "ipt>" +
+          "</body></html>";
 
-        callDisInternal({ styleIframe: true }, { ctsUrl: disMockHostedUrl });
+        callDisInternal({ styleIframe: true }, { ctsHtml: sampleCtsHtml });
+
+        window.setTimeout(function () {
+          var redirectLocation = "https://static.criteo.net/empty.html";
+          location.replace(redirectLocation);
+        }, 2000);
       })();
     </script>
   </body>

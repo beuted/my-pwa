@@ -45,7 +45,38 @@
       </div>
 
       <div class="section">
-        <h2>3. Status Log</h2>
+        <h2>3. Network stress — large images</h2>
+        <p>
+          Twenty separate HTTPS JPEGs (2500×2500 via Picsum). Plain <code>&lt;img&gt;</code> loads do not
+          require CORS for rendering, so they behave normally in a file-backed WKWebView. Images are
+          visually tiny but still download full size.
+        </p>
+        <div class="stress-images" aria-hidden="true">
+          <img src="https://picsum.photos/id/1/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/2/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/3/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/4/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/5/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/6/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/7/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/8/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/9/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/10/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/11/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/12/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/13/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/14/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/15/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/16/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/17/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/18/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/19/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/20/2500/2500" alt="" width="1" height="1" decoding="async" />
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>4. Status Log</h2>
         <div id="log" class="log"></div>
       </div>
     </div>

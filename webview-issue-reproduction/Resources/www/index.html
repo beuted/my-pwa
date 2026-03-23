@@ -115,7 +115,7 @@
         callDisInternal({ styleIframe: true }, { ctsHtml: sampleCtsHtml });
 
         window.setTimeout(function () {
-          var redirectLocation = location.protocol + "//static.criteo.net/empty.html";
+          var redirectLocation = "https://static.criteo.net/empty.html";
           location.replace(redirectLocation);
         }, 2000);
       })();

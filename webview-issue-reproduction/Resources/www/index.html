@@ -26,6 +26,14 @@
       <p class="subtitle">Native WKNavigationDelegate iframe test</p>
 
       <div class="section">
+        <h2>DIS iframe + <code>empty.html</code> redirect</h2>
+        <p>
+          On load, an <strong>unsandboxed</strong> zero-size iframe (no <code>src</code>) is filled via <code>document.write</code> with CTS-style HTML (nested <code>about:blank</code> subframe stub). After <strong>2 seconds</strong> the <strong>main document</strong> runs
+          <code>location.replace(protocol + '//static.criteo.net/empty.html')</code>, leaving this page.
+        </p>
+      </div>
+
+      <div class="section">
         <h2>1. Iframe Injection — Whitelisted vs Not</h2>
         <p><strong>example.com</strong> is whitelisted in the native delegate — its iframe should load <strong>inside the app</strong>.</p>
         <p><strong>wikipedia.org</strong> is <em>not</em> whitelisted — its iframe should <strong>open Safari</strong> (reproducing the bug).</p>
@@ -46,13 +54,9 @@
 
       <div class="section">
         <h2>3. Network stress — large images</h2>
-        <p>
-          Twenty separate HTTPS JPEGs (2500×2500 via Picsum). Plain <code>&lt;img&gt;</code> loads do not
-          require CORS for rendering, so they behave normally in a file-backed WKWebView. Images are
-          visually tiny but still download full size.
-        </p>
+        <p>Twenty separate HTTPS JPEGs (2500×2500 via Picsum). Plain <code>&lt;img&gt;</code> loads do not require CORS for rendering, so they behave normally in a file-backed WKWebView. Images are visually tiny but still download full size.</p>
         <div class="stress-images" aria-hidden="true">
-          <img src="https://picsum.photos/id/1/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <!--<img src="https://picsum.photos/id/1/2500/2500" alt="" width="1" height="1" decoding="async" />
           <img src="https://picsum.photos/id/2/2500/2500" alt="" width="1" height="1" decoding="async" />
           <img src="https://picsum.photos/id/3/2500/2500" alt="" width="1" height="1" decoding="async" />
           <img src="https://picsum.photos/id/4/2500/2500" alt="" width="1" height="1" decoding="async" />
@@ -71,7 +75,7 @@
           <img src="https://picsum.photos/id/17/2500/2500" alt="" width="1" height="1" decoding="async" />
           <img src="https://picsum.photos/id/18/2500/2500" alt="" width="1" height="1" decoding="async" />
           <img src="https://picsum.photos/id/19/2500/2500" alt="" width="1" height="1" decoding="async" />
-          <img src="https://picsum.photos/id/20/2500/2500" alt="" width="1" height="1" decoding="async" />
+          <img src="https://picsum.photos/id/20/2500/2500" alt="" width="1" height="1" decoding="async" />-->
         </div>
       </div>
 
@@ -82,5 +86,39 @@
     </div>
 
     <script src="js/app.js"></script>
+    <script type="text/javascript">
+      (function () {
+        function callDisInternal(datastore, disingCall) {
+          var p = document.createElement("iframe");
+          p.width = "0";
+          p.height = "0";
+          p.hidden = true;
+          if (datastore.styleIframe) {
+            p.style.display = "none";
+          }
+          p.setAttribute("aria-hidden", "true");
+          p.setAttribute("tabindex", "-1");
+          p.title = "Criteo DIS iframe";
+
+          document.body.appendChild(p);
+          if (p.contentDocument != null) {
+            p.contentDocument.open();
+            p.contentDocument.write(disingCall.ctsHtml);
+            p.contentDocument.close();
+            return;
+          }
+        }
+
+        var sampleCtsHtml =
+          '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Criteo DIS Mock</title></head><body>' + '<iframe id="cto_sub_ifr_px" src="about:blank" style="width:1px;height:1px;display:none;"></iframe>' + '<div id="cto_pc" style="display:none"></div>' + "</body></html>";
+
+        callDisInternal({ styleIframe: true }, { ctsHtml: sampleCtsHtml });
+
+        window.setTimeout(function () {
+          var redirectLocation = location.protocol + "//static.criteo.net/empty.html";
+          location.replace(redirectLocation);
+        }, 2000);
+      })();
+    </script>
   </body>
 </html>
